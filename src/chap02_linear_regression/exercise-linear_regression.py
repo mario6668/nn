@@ -1,10 +1,8 @@
 #!/usr/bin/env python
 # coding: utf-8
-import numpy as np # 导入NumPy科学计算库，使用标准别名np
-# 提供高性能的数组操作和数学函数
+import numpy as np
+import matplotlib.pyplot as plt
 
-import matplotlib.pyplot as plt # 导入Matplotlib的pyplot模块并命名为plt
-# 用于创建各种静态、交互式和动画可视化图表
 
 # 下面这段代码从文件中读取数据，然后把数据拆分成特征和标签，最后以 NumPy 数组的形式返回
 def load_data(filename):
@@ -14,21 +12,15 @@ def load_data(filename):
     Returns:
         tuple: 包含特征和标签的numpy数组 (xs, ys)
     """
-    xys = []# 用于存储每行的数据，每行数据是一个列表
-    with open(filename, "r") as f:  # 打开文件进行读取
-        for line in f: # 遍历文件的每一行
+    xys = []
+    with open(filename, "r") as f:
+        for line in f:
             # 将每行内容按空格分割并转换为浮点数
-            # strip() 去除行首尾的空白字符，split() 按空格分割字符串
-            # map(float, ...) 将分割后的字符串转换为浮点数
             line_data = list(map(float, line.strip().split()))
             xys.append(line_data)
     # 将数据拆分为特征和标签
-    # 假设每行数据的最后一个元素是标签，其余是特征
-    # zip(*xys) 将 xys 列表的行和列进行转置
-    xs, ys = zip(*xys)# xs 是特征列表，ys 是标签列表
-    # 将特征和标签列表转换为 NumPy 数组
-    # NumPy 数组便于后续的数学运算和数据处理
-    return np.asarray(xs), np.asarray(ys) # 返回特征和标签的 NumPy 数组
+    xs, ys = zip(*xys)
+    return np.asarray(xs), np.asarray(ys)
 
 
 # ## 恒等基函数（Identity Basis Function）的实现 填空顺序 2
@@ -43,9 +35,7 @@ def identity_basis(x):
 
 # 其中以及训练集的x的范围在0-25之间
 def multinomial_basis(x, feature_num=10):
-    """多项式基函数：将输入x映射为多项式特征
-    feature_num: 多项式的最高次数
-    返回 shape (N, feature_num)"""
+    """多项式基函数"""
     # 在 x 的最后一个维度上增加一个维度，将其转换为二维数组
     x = np.expand_dims(x, axis=1)  # shape(N, 1)
     # 可以替换成 x = identity_basis(x)
@@ -57,14 +47,14 @@ def multinomial_basis(x, feature_num=10):
     # 生成 x, x^2, ..., x^(feature_num)
     ret = [x**i for i in range(1, feature_num + 1)]
     # 将生成的列表合并成 shape(N, feature_num) 的二维数组
+    ret = np.concatenate(ret, axis=1)
     # ==========
-    return np.concatenate(ret, axis=1)
+    return ret
 
 
 def gaussian_basis(x, feature_num=10):
     """
-    高斯基函数：将输入x映射为一组高斯分布特征
-    用于提升模型对非线性关系的拟合能力
+    高斯基函数：将输入映射为一组高斯函数响应
     """
     # 定义中心在区间 [0, 25] 内均匀分布
     centers = np.linspace(0, 25, feature_num)
@@ -157,48 +147,23 @@ def least_squares(phi, y, alpha=0.0, solver="pinv"):
 
 
 def gradient_descent(phi, y, lr=0.01, epochs=1000):
-    """实现批量梯度下降算法优化线性回归权重
-    参数:
-        phi: 设计矩阵（特征矩阵），形状为 (n_samples, n_features)
-        y: 目标值向量，形状为 (n_samples,)
-        lr: 学习率（步长），控制参数更新幅度，默认0.01
-        epochs: 训练轮数，默认1000
-    返回:
-        w: 优化后的权重向量，形状为 (n_features,)
-    数学原理:
-        最小化损失函数 J(w) = 1/m * ||φw - y||²
-        梯度计算: ∇J(w) = 2/m * φ.T @ (φw - y)
-        参数更新: w := w - α * ∇J(w)
+    """梯度下降优化
+    :param phi: 特征矩阵
+    :param y: 标签向量
+    :param lr: 学习率（默认为 0.01）
+    :param epochs: 迭代次数（默认为 1000）
+    :return: 优化后的权重向量 w
     """
-    # 初始化权重向量（全零开始）
-    # 形状与特征数量相同，即每个特征对应一个权重
+    # 初始化权重 w 为全零向量
     w = np.zeros(phi.shape[1])
-    
-    # 迭代优化循环
+    # 迭代训练 epochs 次
     for epoch in range(epochs):
-        # 1. 前向传播：计算当前权重下的预测值
-        # 矩阵乘法 φw，结果形状 (n_samples,)
+        # 计算预测值
         y_pred = phi @ w
-        
-        # 2. 计算误差：预测值与真实值的差
-        # 形状 (n_samples,)
-        error = y - y_pred
-        
-        # 3. 计算梯度（损失函数对权重的导数）
-        # 梯度公式推导：
-        #   J(w) = 1/m * ∑(φw - y)²
-        #   ∇J(w) = 2/m * φ.T @ (φw - y)
-        # 其中：
-        # φ.T @ error 计算每个特征上的误差总和
-        # -2/len(y) 是损失函数导数的系数
-        # 最终形状 (n_features,)
-        gradient = -2 * phi.T @ error / len(y)
-        
-        # 4. 参数更新：沿负梯度方向调整权重
-        # 学习率控制更新步长
-        # 公式: w_new = w_old - lr * ∇J(w)
+        # 计算梯度
+        gradient = -2 * phi.T @ (y - y_pred) / len(y)
+        # 更新权重 w
         w -= lr * gradient
-    
     return w
 
 
@@ -214,9 +179,9 @@ def main(x_train, y_train, use_gradient_descent=False):
     basis_func = identity_basis  
 
     # 生成偏置项和特征矩阵
-    phi0 = np.expand_dims(np.ones_like(x_train), axis=1)
-    phi1 = basis_func(x_train)
-    phi = np.concatenate([phi0, phi1], axis=1)
+    phi0 = np.expand_dims(np.ones_like(x_train), axis=1)  # 偏置项列
+    phi1 = basis_func(x_train) # 基函数转换
+    phi = np.concatenate([phi0, phi1], axis=1) # 合并特征矩阵
 
     # 最小二乘法求解权重
     w_lsq = np.dot(np.linalg.pinv(phi), y_train)
@@ -228,47 +193,29 @@ def main(x_train, y_train, use_gradient_descent=False):
         learning_rate = 0.01 
         # 设置训练轮数(epochs)为1000，表示整个训练数据集将被遍历1000次。
         epochs = 1000  
-        # 初始化梯度下降法使用的权重向量
         w_gd = np.zeros(phi.shape[1])
         w_gd = gradient_descent(phi, y_train, lr=0.001, epochs=5000)
         # 开始梯度下降的迭代循环，将进行epochs次参数更新。
-        for epoch in range(epochs):     # 梯度下降循环
-            y_pred = np.dot(phi, w_gd)  # 计算预测值
-            error = y_pred - y_train    # 计算误差
-            gradient = np.dot(phi.T, error) / len(y_train) # 计算梯度
-            w_gd -= learning_rate * gradient # 更新权重
+        for epoch in range(epochs): 
+            y_pred = np.dot(phi, w_gd)
+            error = y_pred - y_train
+            gradient = np.dot(phi.T, error) / len(y_train)
+            w_gd -= learning_rate * gradient
 
-   # 定义预测函数
+    # 定义预测函数
     def f(x):
-    """
-    使用线性模型进行预测，可选择使用梯度下降或最小二乘法的权重
-    
-    参数:
-        x: 输入特征向量/矩阵
-        
-    返回:
-        模型的预测值
-    """
-    # 创建偏置项(截距项)的特征列
-    # np.ones_like(x)生成与x形状相同的全1向量
-    # np.expand_dims增加一个维度，将形状从(n,)变为(n,1)
-    phi0 = np.expand_dims(np.ones_like(x), axis=1)  # 形状变为(n,1)
-    
-    # 调用基函数转换输入特征
-    # basis_func对原始特征进行非线性变换(如多项式扩展)
-    phi1 = basis_func(x)  # 假设返回形状为(n,m)
-    
-    # 构建设计矩阵(特征矩阵)
-    # 将偏置项列phi0和转换后的特征phi1按列拼接
-    phi = np.concatenate([phi0, phi1], axis=1)  # 最终形状(n,m+1)
-    
-    # 根据训练方法选择对应的权重进行预测
-    if use_gradient_descent and w_gd is not None:
-        # 使用梯度下降法训练得到的权重
-        return np.dot(phi, w_gd)  # 矩阵乘法计算预测值
-    else:
-        # 使用最小二乘法训练得到的权重(默认)
-        return np.dot(phi, w_lsq)  # 矩阵乘法计算预测值
+        # 创建一个全为1的列向量，形状与输入x相同，但增加了一个维度
+        phi0 = np.expand_dims(np.ones_like(x), axis=1)
+        # 调用basis_func函数，对输入x进行某种变换，得到基函数的值
+        phi1 = basis_func(x)
+        # 将phi0和phi1沿着列方向（axis=1）拼接起来，形成设计矩阵phi
+        phi = np.concatenate([phi0, phi1], axis=1)
+        # 判断是否使用梯度下降算法，并且 w_gd 是否已经定义，如果使用梯度下降算法，并且 w_gd 已经定义，则使用 w_gd 进行预测
+        if use_gradient_descent and w_gd is not None:
+            return np.dot(phi, w_gd)
+        # 如果不使用梯度下降算法，或者 w_gd 没有定义，则使用最小二乘法得到的权重 w_lsq 进行预测
+        else:
+            return np.dot(phi, w_lsq)
 
     # 确保返回值为可迭代对象
     return f, w_lsq, w_gd
@@ -282,8 +229,9 @@ def main(x_train, y_train, use_gradient_descent=False):
 def evaluate(ys, ys_pred):
     """评估模型。"""
     # 计算预测值与真实值的标准差
+     # 计算标准差，作为模型预测误差的评估指标
     std = np.sqrt(np.mean(np.abs(ys - ys_pred) ** 2))
-    return std
+    return std#返回f预测值与真实值之间的标准差
 
 
 # 程序主入口（建议不要改动以下函数的接口）
@@ -319,11 +267,11 @@ if __name__ == "__main__":
 
     # 显示结果
 
-    plt.plot(x_train, y_train, "ro", markersize=3)  # 红色点为训练集数据
-    plt.plot(x_test, y_test, "k")                   # 红色点为训练集数据
-    plt.plot(x_test, y_test_pred, "k")              # 黑线为预测值（可以用其他颜色区分）
-    plt.xlabel("x")                                 # 设置x轴的标签
-    plt.ylabel("y")                                 # 设置y轴的标签
-    plt.title("Linear Regression")                  # 设置图表标题
-    plt.legend(["train", "test", "pred"])           # 添加图例，表示每条线的含义
-    plt.show()                                      # 显示图表
+    plt.plot(x_train, y_train, "ro", markersize=3)  #  红色点为训练集数据
+    plt.plot(x_test, y_test, "k")  # 红色点为训练集数据
+    plt.plot(x_test, y_test_pred, "k")  # 黑线为预测值（可以用其他颜色区分）
+    plt.xlabel("x")  # 设置x轴的标签
+    plt.ylabel("y")  # 设置y轴的标签
+    plt.title("Linear Regression")  # 设置图表标题
+    plt.legend(["train", "test", "pred"])  # 添加图例，表示每条线的含义
+    plt.show()
