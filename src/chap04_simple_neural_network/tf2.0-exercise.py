@@ -1,10 +1,8 @@
-# !/usr/bin/env python
+#!/usr/bin/env python
 # coding: utf-8
 # # Tensorflow2.0 小练习
 
-# 导入 numpy 库，并简写为 np（标准约定）
 import numpy as np
-# 导入 TensorFlow 库，并简写为 tf（标准约定）
 import tensorflow as tf
 
 # ## 实现softmax函数
@@ -18,11 +16,10 @@ def softmax(x: tf.Tensor) -> tf.Tensor:
     返回:
         与输入形状相同的 softmax 概率分布张量。
     """
-    x = tf.cast(x, tf.float32) # 统一为float32类型，确保计算精度
+    x = tf.cast(x, tf.float32)
 
     # 数值稳定性处理：减去最大值避免指数爆炸
     max_per_row = tf.reduce_max(x, axis=-1, keepdims=True)
-    # 平移后的logits：每行最大值变为0，其他值为负数
     shifted_logits = x - max_per_row
 
     # 计算指数值
@@ -31,7 +28,10 @@ def softmax(x: tf.Tensor) -> tf.Tensor:
     exp_logits = tf.exp(shifted_logits)
     
     sum_exp = tf.reduce_sum(exp_logits, axis=-1, keepdims=True)
-    return exp_logits / sum_exp
+    
+    softmax_output = exp_logits / sum_exp
+
+    return softmax_output
 
 # 生成测试数据，形状为 [10, 5] 的正态分布随机数
 test_data = np.random.normal(size=[10, 5])
@@ -46,7 +46,9 @@ def sigmoid(x):
     # 将输入x转换为float32类型，确保数值计算的精度和类型一致性。
     x = tf.cast(x, tf.float32)
     # sigmoid 数学定义：1 / (1 + e^{-x})
-    return 1 / (1 + tf.exp(-x))
+    prob_x = 1 / (1 + tf.exp(-x))           
+    
+    return prob_x
 
 # 生成测试数据，形状为 [10, 5] 的正态分布随机数
 test_data = np.random.normal(size=[10, 5])
@@ -75,14 +77,13 @@ def softmax_ce(logits, label):
     return loss
 
 # 生成测试数据，形状为 [10, 5] 的正态随机数
-test_data = np.random.normal(size=[10, 5]).astype(np.float32)
+test_data = np.random.normal(size=[10, 5])
 # 进行softmax转换
 prob = tf.nn.softmax(test_data)
 # 生成标签，每个样本只有一个类别为 1
-label = np.zeros_like(test_data, dtype=np.float32)
+label = np.zeros_like(test_data)
 label[np.arange(10), np.random.randint(0, 5, size=10)] = 1.0
 # 比较自定义的损失值和tf自带结果，误差小于 0.0001 则认为相等
-
 ((tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(label, test_data))
   - softmax_ce(prob, label))**2 < 0.0001).numpy()
 
@@ -106,14 +107,13 @@ def sigmoid_ce(logits, labels):
     return loss
 
 # 测试逻辑
-test_data = np.random.normal(size=[10]).astype(np.float32)
+test_data = np.random.normal(size=[10])
 labels = np.random.randint(0, 2, size=[10]).astype(np.float32)
 
-# 对比 TensorFlow  原始结果和自定义函数结果
-tf_loss = tf.reduce_mean(tf.nn.sigmoid_cross_entropy_with_logits(labels = labels, logits = test_data))
+#  对比 TensorFlow  原始结果和自定义函数结果
+tf_loss = tf.reduce_mean(tf.nn.sigmoid_cross_entropy_with_logits(labels=labels, logits=test_data))
 custom_loss = sigmoid_ce(test_data, labels)
 
-# 打印输出结果
 print("tf loss:", tf_loss.numpy())
 print("custom loss:", custom_loss.numpy())
 print("误差是否小于0.0001:", ((tf_loss - custom_loss) ** 2 < 0.0001).numpy())
