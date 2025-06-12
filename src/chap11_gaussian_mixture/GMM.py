@@ -290,7 +290,7 @@ if __name__ == "__main__":
     
     # 2. 训练GMM模型
     print("\n训练高斯混合模型...")
-    gmm = GaussianMixtureModel(n_components=3, random_state=42)
+    gmm = GaussianMixtureModel(n_components=3, random_state=42) # 创建一个高斯混合模型实例，n_components=3 表示模型包含 3 个高斯分布分量
     gmm.fit(X)
     y_pred = gmm.labels_
     print(f"完成训练，共进行{len(gmm.log_likelihoods)}次迭代")
