@@ -63,7 +63,7 @@ def get_batch(batch_size, length):
 # 3. dec_x: 解码器输入序列（通常包含起始标记），形状为 [batch_size, dec_seq_len]
 # 4. y: 目标输出序列（通常包含结束标记），形状为 [batch_size, dec_seq_len]
     return (batched_examples,
-            tf.constant(enc_x, dtype=tf.int32), 
+            tf.constant(enc_x, dtype=tf.int32),  # 将 enc_x 转换为一个 TensorFlow 常量张量，数据类型为 tf.int32
             tf.constant(dec_x, dtype=tf.int32), 
             tf.constant(y, dtype=tf.int32))
 #测试
