@@ -301,7 +301,7 @@ if __name__ == "__main__":
     
     # 4. 可视化聚类结果
     print("\n可视化聚类结果...")
-    plt.figure(figsize=(12, 5))
+    plt.figure(figsize=(12, 5)) # 创建一个新的图形窗口，并设置其大小
     
     # 左图：真实聚类
     plt.subplot(1, 2, 1)
