@@ -67,7 +67,7 @@ def get_batch(batch_size, length):
             tf.constant(dec_x, dtype=tf.int32), 
             tf.constant(y, dtype=tf.int32))
 #测试
-print(get_batch(2, 10))
+print(get_batch(2, 10)) # 调用 get_batch 函数，并打印其返回值，参数2和10分别表示批次的起始索引和批次大小
 
 ###
 
