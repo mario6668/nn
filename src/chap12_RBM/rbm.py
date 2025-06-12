@@ -196,7 +196,7 @@ if __name__ == '__main__':
     except IOError:
       # 如果文件加载失败，提示用户检查文件路径并退出程序
       print("无法加载MNIST数据文件，请确保mnist_bin.npy文件在正确的路径下")
-      sys.exit(1)
+      sys.exit(1) # 终止程序运行，并返回退出状态码 1
 
     # 获取数据集的形状信息
     n_imgs, n_rows, n_cols = mnist.shape# 分别表示图像数量、行数和列数
